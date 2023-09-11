@@ -3,7 +3,7 @@ import productsRouter from "./routes/products.routes.js";
 import cartsRouter from "./routes/carts.routes.js";
 import viewsRouter from "./routes/views.routes.js";
 import sessionsRouter from "./routes/sessions.routes.js";
-import chatRouter from "./routes/chat.routes.js";
+import chatRouter from "./routes/chat.routes.js"
 import { Server } from "socket.io";
 import __dirname from "./utils.js";
 import handlebars from "express-handlebars";
@@ -13,9 +13,10 @@ import session from "express-session";
 import MongoStore from "connect-mongo";
 import passport from "passport";
 import initializePassport from "./config/passport.config.js";
-import { addMessage, getMessages, sendProductList } from "./controllers/chat.controller.js";
+import { ioConnection } from './controllers/chat.controller.js';
 // import cookieParser from 'cookie-parser';
 // Mongodb URL : "mongodb+srv://Matias-Perroni:fcKP3TXvcILtCNWu@cluster0.ymwavy3.mongodb.net/ecommerce?retryWrites=true&w=majority"
+
 
 dotenv.config();
 const MONGO_URL = process.env.MONGO_URL;
@@ -50,6 +51,8 @@ initializePassport();
 app.use(passport.initialize());
 app.use(passport.session());
 
+
+
 //static files
 app.use(express.static(__dirname + "/public"));
 
@@ -66,27 +69,12 @@ const serverHttp = app.listen(8080, () => {
 //websocket server
 const io = new Server(serverHttp);
 
-const ioConnection = async (socket) => {
-    console.log("Nuevo cliente conectado");
-    const products = await sendProductList();
-    socket.emit("sendProducts", products);
-
-    socket.on("message", async (data) => {
-        console.log("from data", data);
-        let user = data.user;
-        let message = data.message;
-        addMessage(user, message);
-        const messages = getMessages();
-        socket.emit("messageLogs", messages);
-    });
-};
-
 //routes
 app.use("/api/products", productsRouter);
 app.use("/api/carts", cartsRouter);
 app.use("/", viewsRouter);
 app.use("/sessions", sessionsRouter);
-app.use("/", chatRouter);
+app.use("/", chatRouter)
 
 io.on("connection", ioConnection);
 //todo que el usuario que manda el msj al chat salga del usuario que esta logueado

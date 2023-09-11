@@ -2,6 +2,9 @@
 // const cartManager = new CartManagerDB();
 // import ProductDTO from '../dto/products.dto.js';
 import { cartRepository } from "../repositories/index.js";
+import CustomError from "../utils/errors/CustomError.js";
+import { createCartError } from "../utils/errors/errorInformation.js";
+import EErrors from '../utils/errors/Enum.js';
 
 export const getCarts = async (req, res) => {
     const carts = await cartRepository.getAllCarts();
@@ -11,6 +14,14 @@ export const getCarts = async (req, res) => {
 export const createNewCart = async (req, res) => {
     try {
         const cart = await cartRepository.createNewCart();
+        if (!cart) {
+            CustomError.createError({
+                name: "Request error",
+                cause: createCartError(),
+                code: EErrors.ROUTING_ERROR,
+                message: "Error creating cart.",
+            });
+        }
         res.send(cart);
     } catch (error) {
         console.error(error);
@@ -22,12 +33,20 @@ export const getCartByID = async (req, res) => {
     try {
         const cartID = req.params.cid;
         const cart = await cartRepository.getById(cartID);
+        if(!cart) {
+            CustomError.createError({
+                name: "Request error",
+                cause: createCartError(cartID),
+                code: EErrors.ROUTING_ERROR,
+                message: "Error creating cart.",
+            })
+        }
         const products = cart.products;
         // res.send({products});
         res.render("cart", { products });
     } catch (error) {
         console.error(error);
-        res.status(500).send("Error al obtener los datos");
+        res.status(500).send("Can´t get cart data.");
     }
 };
 
@@ -47,6 +66,13 @@ export const addProductToCart = async (req, res) => {
                 await cartRepository.updateQuantity(cartID, prodID, quantity);
                 return;
             }
+        } else {
+            CustomError.createError({
+                name: "Request error",
+                cause: createCartError(cartID, prodID),
+                code: EErrors.ROUTING_ERROR,
+                message: "Error creating cart.",
+            })
         }
         const productAddedToCart = await cartRepository.addToCart(
             cartID,
@@ -90,6 +116,14 @@ export const updateQuantity = async (req, res) => {
 export const deleteCart = async (req, res) => {
     const cid = req.params.cid;
     const deletedCart = await cartRepository.emptyCart(cid);
+    if(!deletedCart) {
+        CustomError.createError({
+            name: "Request error",
+            cause: createCartError(cid),
+            code: EErrors.ROUTING_ERROR,
+            message: "Error creating cart.",
+        })
+    }
     console.log(deletedCart);
     res.send(deletedCart);
 };
@@ -101,16 +135,13 @@ export const finishPurchase = async (req, res) => {
         const cartID = req.params.cid;
         const cart = await cartRepository.purchase(cartID, user.email);
         cart.ticket.purchaser = `Name: ${user.first_name} Last Name: ${user.last_name}. Email: ${user.email}`;
-        if(cart) {
-            const newTicket = {newTicket: cart.ticket};
+        if (cart) {
+            const newTicket = { newTicket: cart.ticket };
             console.log(newTicket);
-            res.render("purchase", {newTicket: newTicket});
+            res.render("purchase", { newTicket: newTicket });
         } else {
-            res.status(500).send("error: error trying to purchase.")
+            res.status(500).send("error: error trying to purchase.");
         }
-
-
-        
     } catch (error) {
         console.error(error);
         res.status(500).send("Error purchasing.");
