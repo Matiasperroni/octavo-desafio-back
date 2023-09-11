@@ -1,11 +1,11 @@
 import { Router } from "express";
 
-import {getProducts, getProductById, addProduct, updateProduct, deleteProduct} from "../controllers/products.controller.js"
+import {getProducts, getProductById, addProduct, updateProduct, deleteProduct, mockingProducts} from "../controllers/products.controller.js"
 import { isAdmin } from '../middlewares/middlewares.js';
 const router = Router();
 
 
-
+router.get("/mockingproducts", mockingProducts)
 
 router.get("/", getProducts);
 
