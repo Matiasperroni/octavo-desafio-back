@@ -32,10 +32,8 @@ export const ioConnection = async (socket) => {
     socket.on("message", async (data) => {
         let user = data.user;
         let message = data.message;
-        console.log("from data", user, message);
-        // todo arreglar await messageRepository.addMessage(user, message);
+        await messageRepository.addMessage(user, message);
         const messages = await messageRepository.getMessages();
-        console.log("SERAAA?", messages);
         socket.emit("messageLogs", messages);
     });
 };
